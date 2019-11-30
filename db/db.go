@@ -47,7 +47,7 @@ type Message struct {
 	Message string `json:"message"`
 }
 
-func (d *Db) GetMessageByUUID(uuid string) *Message {
+func (d *Db) GetMessageByUUID(uuid string) (*Message, error) {
 	// Prepare query, takes a name argument, protects from sql injection
 	stmt, err := d.Prepare("SELECT * FROM messages WHERE uuid=$1")
 	if err != nil {
@@ -57,7 +57,7 @@ func (d *Db) GetMessageByUUID(uuid string) *Message {
 	// Make query with our stmt, passing in name argument
 	rows, err := stmt.Query(uuid)
 	if err != nil {
-		fmt.Println("GetMessageByUUID Query Err: ", err)
+		return nil, err
 	}
 
 	// Create User struct for holding each row's data
@@ -71,11 +71,11 @@ func (d *Db) GetMessageByUUID(uuid string) *Message {
 			&m.Message,
 		)
 		if err != nil {
-			fmt.Println("Error scanning rows: ", err)
+			return nil, err
 		}
 	}
 
-	return &m
+	return &m, nil
 }
 
 func (db *Db) PostMessage(uuid, message string) {

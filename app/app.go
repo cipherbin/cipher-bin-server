@@ -61,10 +61,14 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := a.db.GetMessageByUUID(bin)
+	msg, err := a.db.GetMessageByUUID(bin)
+	if err != nil {
+		http.Error(w, "Some error happened", 500)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(message)
+	json.NewEncoder(w).Encode(msg)
 }
 
 type MessageBody struct {
