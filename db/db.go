@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	// postgres driver
@@ -75,4 +76,13 @@ func (d *Db) GetMessageByUUID(uuid string) *Message {
 	}
 
 	return &m
+}
+
+func (db *Db) PostMessage(uuid, message string) {
+	query := `INSERT INTO messages (uuid, message) VALUES ($1, $2);`
+
+	_, err := db.Exec(query, uuid, message)
+	if err != nil {
+		log.Printf("Error inserting record into database: %s", err)
+	}
 }
