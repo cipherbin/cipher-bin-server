@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	// postgres driver
@@ -41,26 +40,28 @@ func New() (*Db, error) {
 	return &Db{db}, nil
 }
 
+// Message represents a record from our "messages" column
 type Message struct {
 	ID      int    `json:"id"`
 	UUID    string `json:"uuid"`
 	Message string `json:"message"`
 }
 
-func (d *Db) GetMessageByUUID(uuid string) (*Message, error) {
-	// Prepare query, takes a name argument, protects from sql injection
-	stmt, err := d.Prepare("SELECT * FROM messages WHERE uuid=$1")
+// GetMessageByUUID finds a message by it's UUID or returns an error
+func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
+	// Prepare query, takes a uuid argument, protects from sql injection
+	stmt, err := db.Prepare("SELECT * FROM messages WHERE uuid=$1")
 	if err != nil {
 		fmt.Println("GetMessageByUUID Preperation Err: ", err)
 	}
 
-	// Make query with our stmt, passing in name argument
+	// Make query with our prepeared stmt, passing in uuid argument
 	rows, err := stmt.Query(uuid)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create User struct for holding each row's data
+	// Create Message struct for holding each row's data
 	var m Message
 
 	// Copy the columns from row into the values pointed at by m (Message)
@@ -78,11 +79,28 @@ func (d *Db) GetMessageByUUID(uuid string) (*Message, error) {
 	return &m, nil
 }
 
-func (db *Db) PostMessage(uuid, message string) {
+// PostMessage takes a uuid and a message & inserts a new record into the db
+func (db *Db) PostMessage(uuid, message string) error {
 	query := `INSERT INTO messages (uuid, message) VALUES ($1, $2);`
 
+	// Execute query with uuid and message arguments
 	_, err := db.Exec(query, uuid, message)
 	if err != nil {
-		log.Printf("Error inserting record into database: %s", err)
+		return err
 	}
+
+	return nil
+}
+
+// DestroyMessageByUUID rakes a uuid and attempts to destroy the associated record
+func (db *Db) DestroyMessageByUUID(uuid string) error {
+	query := `DELETE FROM messages WHERE uuid=$1;`
+
+	// Execute query with uuid argument
+	_, err := db.Exec(query, uuid)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

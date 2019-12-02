@@ -28,6 +28,7 @@ func main() {
 	// Create and hydrate our application struct with database
 	a := app.New(db)
 
+	// Spin up the app server and start listening
 	log.Println("Serving application on PORT: ", 4000)
 	log.Fatal(http.ListenAndServe(":4000", a.Mux))
 }
