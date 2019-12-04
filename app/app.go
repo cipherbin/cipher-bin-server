@@ -54,7 +54,7 @@ func New(db *db.Db) *App {
 	// as well as the *chi.Mux
 	a := &App{db: db, Mux: r}
 
-	// Define routing and there corresponding handlers
+	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Get("/msg", a.getMessage)
 	r.Post("/msg", a.postMessage)
 
