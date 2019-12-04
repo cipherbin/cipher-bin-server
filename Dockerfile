@@ -25,7 +25,7 @@ COPY . .
 # Build the binary & mark the build as statically linked.
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/cipher-bin-server .
 
-# STEP 2 build a small image
+# STEP 2 build a small image from scratch
 FROM scratch
 
 # Copy our static executable.
@@ -34,5 +34,5 @@ COPY --from=builder /go/bin/cipher-bin-server /go/bin/cipher-bin-server
 # Expose the port our server runs on
 EXPOSE 4000
 
-# Run the hello binary.
+# Run the cipher-bin-server binary.
 ENTRYPOINT ["/go/bin/cipher-bin-server"]
