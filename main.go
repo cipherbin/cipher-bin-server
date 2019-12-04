@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,7 +29,13 @@ func main() {
 	// Create and hydrate our application struct with database
 	a := app.New(db)
 
+	// Set the port
+	port := os.Getenv("CIPHER_BIN_SERVER_PORT")
+	if port == "" {
+		port = "4000"
+	}
+
 	// Spin up the app server and start listening
-	log.Println("Serving application on PORT: ", 4000)
-	log.Fatal(http.ListenAndServe(":4000", a.Mux))
+	fmt.Printf("Serving application on port %s\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), a.Mux))
 }
