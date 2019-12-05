@@ -1,5 +1,5 @@
 # Docker multi stage build: Allows us to build, optimize, and
-# put a small (hopefully) static binary on a scratch image
+# put a small (hopefully) static binary on a scratch image.
 
 # Step 1: build executable binary.
 FROM golang:alpine AS builder
@@ -25,7 +25,7 @@ COPY . .
 # Build the binary & mark the build as statically linked.
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/cipher-bin-server .
 
-# STEP 2 build a small image from scratch
+# STEP 2 build a small image from scratch.
 FROM scratch
 
 # Copy our static executable.
