@@ -18,10 +18,11 @@ type Db struct {
 // returns it, otherwise returns the error
 func New() (*Db, error) {
 	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		os.Getenv("CIPHER_BIN_DB_HOST"),
 		os.Getenv("CIPHER_BIN_DB_PORT"),
 		os.Getenv("CIPHER_BIN_DB_USER"),
+		os.Getenv("CIPHER_BIN_DB_PASSWORD"),
 		os.Getenv("CIPHER_BIN_DB_NAME"),
 		os.Getenv("CIPHER_BIN_SSL_MODE"),
 	)

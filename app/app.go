@@ -36,7 +36,7 @@ func New(db *db.Db) *App {
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300, // Maximum value not ignored by any major browsers
 	})
 
 	// Set up middleware
@@ -85,7 +85,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If the message has an ID == 0, there was no error, however the
-	// record was not found. 99% of the time this is due to the message
+	// record was not found. 99.9% of the time this is due to the message
 	// having already been destroyed
 	if msg.ID == 0 {
 		e := &ErrResponse{Message: "Sorry, this message has already been viewed and destroyed"}
@@ -133,7 +133,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	// Initialize a return MessageBody
 	var m MessageBody
 
-	// Unmarshal the body bytes into a pointer to our initialized Message struct
+	// Unmarshal the body bytes into a pointer to our Message struct
 	err = json.Unmarshal(b, &m)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
