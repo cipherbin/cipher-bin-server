@@ -24,6 +24,13 @@ type ErrResponse struct {
 	Message string `json:"message"`
 }
 
+// MessageBody represents the post body that comes through on
+// the postMessage request
+type MessageBody struct {
+	UUID    string `json:"uuid"`
+	Message string `json:"message"`
+}
+
 // New takes a *db.Db and creates a chi router, sets up cors rules, sets up
 // a handful of middleware, then hydrates an App struct to return a pointer to it
 func New(db *db.Db) *App {
@@ -57,6 +64,7 @@ func New(db *db.Db) *App {
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Get("/msg", a.getMessage)
 	r.Post("/msg", a.postMessage)
+	r.Post("/ping", a.ping)
 
 	return a
 }
@@ -107,13 +115,6 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(msg)
 }
 
-// MessageBody represents the post body that comes through on
-// the postMessage request
-type MessageBody struct {
-	UUID    string `json:"uuid"`
-	Message string `json:"message"`
-}
-
 // postMessage is a HandlerFunc for post requests to /msg
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	// Return early for method not allowed
@@ -149,4 +150,16 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 
 	// 200 OK
 	w.WriteHeader(http.StatusOK)
+}
+
+func (a *App) ping(w http.ResponseWriter, r *http.Request) {
+	// Return early for method not allowed
+	if r.Method != "GET" {
+		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 200 OK
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("pong"))
 }
