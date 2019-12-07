@@ -17,12 +17,18 @@ type Db struct {
 // New makes a new database using the connection string and
 // returns it, otherwise returns the error
 func New() (*Db, error) {
+	// Don't feel like setting a password on my local db
+	p := os.Getenv("CIPHER_BIN_DB_PASSWORD")
+	if p != "" {
+		p = fmt.Sprintf("password=%s", p)
+	}
+
 	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s %s dbname=%s sslmode=%s",
 		os.Getenv("CIPHER_BIN_DB_HOST"),
 		os.Getenv("CIPHER_BIN_DB_PORT"),
 		os.Getenv("CIPHER_BIN_DB_USER"),
-		os.Getenv("CIPHER_BIN_DB_PASSWORD"),
+		p,
 		os.Getenv("CIPHER_BIN_DB_NAME"),
 		os.Getenv("CIPHER_BIN_SSL_MODE"),
 	)

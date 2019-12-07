@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	gu "github.com/google/uuid"
 )
 
 // App is a struct that holds a chi multiplexer as well as a connection to our database
@@ -69,6 +70,14 @@ func New(db *db.Db) *App {
 	return a
 }
 
+// isValidUUID takes a string and verifies it is a valid uuid. Was initially
+// going to use a regex instead of 3rd party package, however google's uuid Parse
+// method benchmarked 18x faster
+func isValidUUID(uuid string) bool {
+	_, err := gu.Parse(uuid)
+	return err == nil
+}
+
 // getMessage is a HandlerFunc for GET requests to /msg
 // Ex: cipherb.in/msg?bin=abc123
 func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
@@ -80,15 +89,15 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 
 	// Get a message uuid from the "bin" query param
 	uuid := r.URL.Query().Get("bin")
-	if uuid == "" {
-		http.Error(w, "We're sorry, there was an error!", 500)
+	if uuid == "" || !isValidUUID(uuid) {
+		http.Error(w, "Could not find anything matching your request", http.StatusNotFound)
 		return
 	}
 
 	// Retrieve a message by it's uuid
 	msg, err := a.db.GetMessageByUUID(uuid)
 	if err != nil {
-		http.Error(w, "We're sorry, there was an error!", 500)
+		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
 	}
 
@@ -106,7 +115,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	// we need to destroy it before we return it
 	err = a.db.DestroyMessageByUUID(uuid)
 	if err != nil {
-		http.Error(w, "We're sorry, there was an error!", 500)
+		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
 	}
 
@@ -152,14 +161,15 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Health checks
 func (a *App) ping(w http.ResponseWriter, r *http.Request) {
-	// Return early for method not allowed
-	if r.Method != "GET" {
-		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
+	// Check that our db connection is good
+	err := a.db.Ping()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// 200 OK
 	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "text/plain")
 	w.Write([]byte("pong"))
