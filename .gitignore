@@ -16,4 +16,4 @@
 
 errors.log
 
-build.sh
+build-n-deploy.sh
