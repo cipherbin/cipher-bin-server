@@ -64,7 +64,7 @@ func New(db *db.Db) *App {
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Get("/msg", a.getMessage)
 	r.Post("/msg", a.postMessage)
-	r.Post("/ping", a.ping)
+	r.Get("/ping", a.ping)
 
 	return a
 }
@@ -161,5 +161,6 @@ func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 
 	// 200 OK
 	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "text/plain")
 	w.Write([]byte("pong"))
 }
