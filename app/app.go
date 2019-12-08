@@ -56,6 +56,7 @@ func New(db *db.Db) *App {
 		middleware.Recoverer,               // recover from panics without crashing server
 		middleware.Timeout(30*time.Second), // Set a reasonable timeout
 		cors.Handler,                       // Allow * origins
+		rateLimiter,                        // Rate limiter
 	)
 
 	// Create a pointer to an App struct and attach the database

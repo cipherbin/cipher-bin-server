@@ -9,4 +9,5 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/lib/pq v1.2.0
 	golang.org/x/net v0.0.0-20190522155817-f3200d17e092 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 )
