@@ -49,13 +49,13 @@ func New(db *db.Db) *App {
 
 	// Set up middleware
 	r.Use(
+		cors.Handler, // Allow * origins
 		render.SetContentType(render.ContentTypeJSON), // set content-type headers as application/json
 		middleware.Logger,                  // log api request calls
 		middleware.DefaultCompress,         // compress results, mostly gzipping assets and json
 		middleware.StripSlashes,            // strip slashes to no slash URL versions
 		middleware.Recoverer,               // recover from panics without crashing server
 		middleware.Timeout(30*time.Second), // Set a reasonable timeout
-		cors.Handler,                       // Allow * origins
 		rateLimiter,                        // Rate limiter
 	)
 

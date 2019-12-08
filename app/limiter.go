@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -70,7 +69,7 @@ func rateLimiter(next http.Handler) http.Handler {
 			log.Println(err.Error())
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
-		fmt.Println("IP", ip)
+
 		limiter := getVisitor(ip)
 		if limiter.Allow() == false {
 			http.Error(w, http.StatusText(429), http.StatusTooManyRequests)
