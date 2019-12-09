@@ -12,6 +12,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	gu "github.com/google/uuid"
+
+	"github.com/didip/tollbooth"
+	"github.com/didip/tollbooth/limiter"
+	"github.com/didip/tollbooth_chi"
 )
 
 // App is a struct that holds a chi multiplexer as well as a connection to our database
@@ -35,16 +39,24 @@ type MessageBody struct {
 // New takes a *db.Db and creates a chi router, sets up cors rules, sets up
 // a handful of middleware, then hydrates an App struct to return a pointer to it
 func New(db *db.Db) *App {
+	limiter := tollbooth.NewLimiter(3, &limiter.ExpirableOptions{
+		DefaultExpirationTTL: time.Minute * 30,
+	})
+
+	limiter.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, http.StatusText(429), http.StatusTooManyRequests)
+		return
+	})
+
 	r := chi.NewRouter()
 
 	// Define cors rules
 	cors := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any major browsers
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders: []string{"Link"},
+		MaxAge:         300, // Maximum value not ignored by any major browsers
 	})
 
 	// Set up middleware
@@ -56,7 +68,7 @@ func New(db *db.Db) *App {
 		middleware.StripSlashes,            // strip slashes to no slash URL versions
 		middleware.Recoverer,               // recover from panics without crashing server
 		middleware.Timeout(30*time.Second), // Set a reasonable timeout
-		rateLimiter,                        // Rate limiter
+		tollbooth_chi.LimitHandler(limiter),
 	)
 
 	// Create a pointer to an App struct and attach the database
