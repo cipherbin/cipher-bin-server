@@ -2,8 +2,11 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/smtp"
+	"os"
 	"time"
 
 	"github.com/bradford-hamilton/cipher-bin-server/db"
@@ -26,13 +29,6 @@ type App struct {
 
 // ErrResponse represents the err response shape when returning json from API
 type ErrResponse struct {
-	Message string `json:"message"`
-}
-
-// MessageBody represents the post body that comes through on
-// the postMessage request
-type MessageBody struct {
-	UUID    string `json:"uuid"`
 	Message string `json:"message"`
 }
 
@@ -63,12 +59,12 @@ func New(db *db.Db) *App {
 	r.Use(
 		cors.Handler, // Allow * origins
 		render.SetContentType(render.ContentTypeJSON), // set content-type headers as application/json
-		middleware.Logger,                  // log api request calls
-		middleware.DefaultCompress,         // compress results, mostly gzipping assets and json
-		middleware.StripSlashes,            // strip slashes to no slash URL versions
-		middleware.Recoverer,               // recover from panics without crashing server
-		middleware.Timeout(30*time.Second), // Set a reasonable timeout
-		tollbooth_chi.LimitHandler(limiter),
+		middleware.Logger,                   // log api request calls
+		middleware.DefaultCompress,          // compress results, mostly gzipping assets and json
+		middleware.StripSlashes,             // strip slashes to no slash URL versions
+		middleware.Recoverer,                // recover from panics without crashing server
+		middleware.Timeout(30*time.Second),  // Set a reasonable timeout
+		tollbooth_chi.LimitHandler(limiter), // Set a request limiter by ip
 	)
 
 	// Create a pointer to an App struct and attach the database
@@ -132,6 +128,13 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if msg.Email != "" {
+		err = emailReadReceipt(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
 	// 200 OK -> return msg
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(msg)
@@ -154,7 +157,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// Initialize a return MessageBody
-	var m MessageBody
+	var m db.Message
 
 	// Unmarshal the body bytes into a pointer to our Message struct
 	err = json.Unmarshal(b, &m)
@@ -164,7 +167,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new message record with the provided uuid and message content
-	err = a.db.PostMessage(m.UUID, m.Message)
+	err = a.db.PostMessage(m)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -186,4 +189,41 @@ func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "text/plain")
 	w.Write([]byte("pong"))
+}
+
+func emailReadReceipt(message *db.Message) error {
+	user := os.Getenv("CIPHER_BIN_EMAIL_USERNAME")
+	pass := os.Getenv("CIPHER_BIN_EMAIL_PASSWORD")
+
+	// Set up authentication
+	auth := smtp.PlainAuth("", user, pass, "smtp.gmail.com")
+	emailBody := "Your message has been viewed and destroyed."
+
+	if message.ReferenceName != "" {
+		emailBody = fmt.Sprintf(
+			"Your message with reference name: \"%s\" has been viewed and destroyed.",
+			message.ReferenceName,
+		)
+	}
+
+	emailBytes := []byte(
+		fmt.Sprintf("To: %s\r\n", message.Email) +
+			"Subject: Your message has been read.\r\n" +
+			"\r\n" +
+			fmt.Sprintf("%s\r\n", emailBody),
+	)
+
+	// Connect to the server, authenticate, and send the email
+	err := smtp.SendMail(
+		"smtp.gmail.com:587",
+		auth,
+		"cipherbinservice@gmail.com",
+		[]string{message.Email},
+		emailBytes,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

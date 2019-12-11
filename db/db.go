@@ -49,9 +49,11 @@ func New() (*Db, error) {
 
 // Message represents a record from our "messages" column
 type Message struct {
-	ID      int    `json:"id"`
-	UUID    string `json:"uuid"`
-	Message string `json:"message"`
+	ID            int    `json:"id"`
+	UUID          string `json:"uuid"`
+	Message       string `json:"message"`
+	Email         string `json:"email"`
+	ReferenceName string `json:"reference_name"`
 }
 
 // GetMessageByUUID finds a message by it's UUID or returns an error
@@ -77,6 +79,8 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 			&m.ID,
 			&m.UUID,
 			&m.Message,
+			&m.Email,
+			&m.ReferenceName,
 		)
 		if err != nil {
 			return nil, err
@@ -87,11 +91,11 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 }
 
 // PostMessage takes a uuid and a message & inserts a new record into the db
-func (db *Db) PostMessage(uuid, message string) error {
-	query := `INSERT INTO messages (uuid, message) VALUES ($1, $2);`
+func (db *Db) PostMessage(msg Message) error {
+	query := `INSERT INTO messages (uuid, message, email, reference_name) VALUES ($1, $2, $3, $4);`
 
 	// Execute query with uuid and message arguments
-	_, err := db.Exec(query, uuid, message)
+	_, err := db.Exec(query, msg.UUID, msg.Message, msg.Email, msg.ReferenceName)
 	if err != nil {
 		return err
 	}
