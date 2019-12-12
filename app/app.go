@@ -215,7 +215,7 @@ func emailReadReceipt(message *db.Message) error {
 
 	// Connect to the server, authenticate, and send the email
 	err := smtp.SendMail(
-		"smtp.gmail.com:587",
+		"smtp.gmail.com:465",
 		auth,
 		"cipherbinservice@gmail.com",
 		[]string{message.Email},
