@@ -35,14 +35,12 @@ func New() (*Db, error) {
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
 	// Check that our connection is good
 	err = db.Ping()
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
