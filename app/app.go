@@ -207,11 +207,12 @@ func emailReadReceipt(message *db.Message) error {
 	}
 
 	emailBytes := []byte(
-		fmt.Sprintf("To: %s\r\n", message.Email) +
-			fmt.Sprintf("From: %s\r\n", user) +
-			"Subject: Your message has been read.\r\n" +
-			"\r\n" +
-			fmt.Sprintf("%s\r\n", emailBody),
+		fmt.Sprintf(
+			"To: %s\r\nFrom: %s\r\nSubject: Your message has been read.\r\n\r\n\r\n%s\r\n",
+			message.Email,
+			user,
+			emailBody,
+		),
 	)
 
 	// Connect to the server, authenticate, and send the email
