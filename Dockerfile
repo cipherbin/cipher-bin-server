@@ -1,3 +1,8 @@
+# Unfortunately had to ditch the 2 step builder pattern, putting a binary onto
+# a "scratch" image... When trying to use the Go smtp package it did not have
+# access to some machine level crypto/tls/certificate functionality needed.
+# Will come back to this later.
+
 # Step 1: build executable binary.
 FROM golang:alpine
 
