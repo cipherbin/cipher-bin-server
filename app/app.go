@@ -208,6 +208,7 @@ func emailReadReceipt(message *db.Message) error {
 
 	emailBytes := []byte(
 		fmt.Sprintf("To: %s\r\n", message.Email) +
+			fmt.Sprintf("From: %s\r\n", user) +
 			"Subject: Your message has been read.\r\n" +
 			"\r\n" +
 			fmt.Sprintf("%s\r\n", emailBody),
