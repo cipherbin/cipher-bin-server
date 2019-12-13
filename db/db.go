@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	// postgres driver
@@ -62,12 +63,14 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 	// Prepare query, takes a uuid argument, protects from sql injection
 	stmt, err := db.Prepare("SELECT * FROM messages WHERE uuid=$1")
 	if err != nil {
-		fmt.Println("GetMessageByUUID Preperation Err: ", err)
+		log.Print("GetMessageByUUID Preperation Err: ", err)
+		return nil, err
 	}
 
 	// Make query with our prepeared stmt, passing in uuid argument
 	rows, err := stmt.Query(uuid)
 	if err != nil {
+		log.Print(err)
 		return nil, err
 	}
 
@@ -85,6 +88,7 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 			&m.CreatedAt,
 		)
 		if err != nil {
+			log.Print(err)
 			return nil, err
 		}
 	}
@@ -99,6 +103,7 @@ func (db *Db) PostMessage(msg Message) error {
 	// Execute query with uuid and message arguments
 	_, err := db.Exec(query, msg.UUID, msg.Message, msg.Email, msg.ReferenceName)
 	if err != nil {
+		log.Print(err)
 		return err
 	}
 
@@ -112,6 +117,7 @@ func (db *Db) DestroyMessageByUUID(uuid string) error {
 	// Execute query with uuid argument
 	_, err := db.Exec(query, uuid)
 	if err != nil {
+		log.Print(err)
 		return err
 	}
 
