@@ -222,7 +222,7 @@ func emailReadReceipt(message *db.Message) {
 	smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
-		"cipherbinservice@gmail.com",
+		user,
 		[]string{message.Email},
 		emailBytes,
 	)
