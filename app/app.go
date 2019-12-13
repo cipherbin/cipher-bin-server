@@ -128,11 +128,12 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If the msg has a designated read confirmation email, send it off. Right now
+	// not worried about email error handling or making sure to wait for all
+	// of the running go routines to finish before process ends, etc. Makes a
+	// very noticeable difference in the req/res cycle
 	if msg.Email != "" {
-		err = emailReadReceipt(msg)
-		if err != nil {
-			fmt.Println(err)
-		}
+		go emailReadReceipt(msg)
 	}
 
 	// 200 OK -> return msg
@@ -191,7 +192,9 @@ func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
 
-func emailReadReceipt(message *db.Message) error {
+// emailReadReceipt sends an email to a message's specified email letting
+// them know their message has been read and destroyed
+func emailReadReceipt(message *db.Message) {
 	user := os.Getenv("CIPHER_BIN_EMAIL_USERNAME")
 	pass := os.Getenv("CIPHER_BIN_EMAIL_PASSWORD")
 
@@ -216,16 +219,11 @@ func emailReadReceipt(message *db.Message) error {
 	)
 
 	// Connect to the server, authenticate, and send the email
-	err := smtp.SendMail(
+	smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
 		"cipherbinservice@gmail.com",
 		[]string{message.Email},
 		emailBytes,
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
