@@ -27,11 +27,6 @@ type App struct {
 	Mux *chi.Mux
 }
 
-// ErrResponse represents the err response shape when returning json from API
-type ErrResponse struct {
-	Message string `json:"message"`
-}
-
 // New takes a *db.Db and creates a chi router, sets up cors rules, sets up
 // a handful of middleware, then hydrates an App struct to return a pointer to it
 func New(db *db.Db) *App {
@@ -72,11 +67,58 @@ func New(db *db.Db) *App {
 	a := &App{db: db, Mux: r}
 
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
-	r.Get("/msg", a.getMessage)
 	r.Post("/msg", a.postMessage)
+	r.Get("/msg", a.getMessage)
 	r.Get("/ping", a.ping)
 
 	return a
+}
+
+// postMessage is a HandlerFunc for post requests to /msg
+func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
+	// Return early for method not allowed
+	if r.Method != "POST" {
+		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the POST body
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer r.Body.Close()
+
+	// Initialize a return MessageBody
+	var m db.Message
+
+	// Unmarshal the body bytes into a pointer to our Message struct
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// Create a new message record with the provided uuid and message content
+	err = a.db.PostMessage(m)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// 200 OK
+	w.WriteHeader(http.StatusOK)
+}
+
+// ErrResponse represents the err response shape when returning json from API
+type ErrResponse struct {
+	Message string `json:"message"`
+}
+
+// MessageResponse is the shape of the json we return when a user fetches a message
+type MessageResponse struct {
+	Message string `json:"message"`
 }
 
 // isValidUUID takes a string and verifies it is a valid uuid. Was initially
@@ -136,46 +178,13 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 		go emailReadReceipt(msg)
 	}
 
+	// Create a response that only returns the ecrypted message contents, as
+	// the front end doesn't need to know about any of the other attributes
+	m := MessageResponse{msg.Message}
+
 	// 200 OK -> return msg
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(msg)
-}
-
-// postMessage is a HandlerFunc for post requests to /msg
-func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
-	// Return early for method not allowed
-	if r.Method != "POST" {
-		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Read the POST body
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	defer r.Body.Close()
-
-	// Initialize a return MessageBody
-	var m db.Message
-
-	// Unmarshal the body bytes into a pointer to our Message struct
-	err = json.Unmarshal(b, &m)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	// Create a new message record with the provided uuid and message content
-	err = a.db.PostMessage(m)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	// 200 OK
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(m)
 }
 
 // Health checks
