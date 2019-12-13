@@ -54,6 +54,7 @@ type Message struct {
 	Message       string `json:"message"`
 	Email         string `json:"email"`
 	ReferenceName string `json:"reference_name"`
+	CreatedAt     string `json:"created_at"`
 }
 
 // GetMessageByUUID finds a message by it's UUID or returns an error
@@ -73,7 +74,7 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 	// Create Message struct for holding each row's data
 	var m Message
 
-	// Copy the columns from row into the values pointed at by m (Message)
+	// Copy the columns from the row into the values pointed at by m (Message)
 	for rows.Next() {
 		err = rows.Scan(
 			&m.ID,
@@ -81,6 +82,7 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 			&m.Message,
 			&m.Email,
 			&m.ReferenceName,
+			&m.CreatedAt,
 		)
 		if err != nil {
 			return nil, err
