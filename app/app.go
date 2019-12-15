@@ -218,6 +218,7 @@ func emailReadReceipt(message *db.Message) {
 		)
 	}
 
+	// A super basic email template
 	emailBytes := []byte(
 		fmt.Sprintf(
 			"To: %s\r\nFrom: %s\r\nSubject: Your message has been read.\r\n\r\n\r\n%s\r\n",
