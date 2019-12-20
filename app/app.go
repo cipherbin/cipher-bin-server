@@ -111,11 +111,6 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// ErrResponse represents the err response shape when returning json from API
-type ErrResponse struct {
-	Message string `json:"message"`
-}
-
 // MessageResponse is the shape of the json we return when a user fetches a message
 type MessageResponse struct {
 	Message string `json:"message"`
@@ -156,7 +151,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	// record was not found. 99.9% of the time this is due to the message
 	// having already been destroyed
 	if msg.ID == 0 {
-		e := &ErrResponse{Message: "Sorry, this message has already been viewed and destroyed"}
+		e := &MessageResponse{Message: "Sorry, this message has already been viewed and destroyed"}
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(e)
 		return
@@ -170,10 +165,9 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If the msg has a designated read confirmation email, send it off. Right now
-	// not worried about email error handling or making sure to wait for all
-	// of the running go routines to finish before process ends, etc. Makes a
-	// very noticeable difference in the req/res cycle
+	// If the msg has a designated read confirmation email, send it off. Right now I'm
+	// not worried about email error handling or making sure to wait for all of the
+	// running go routines to finish before process ends, etc.
 	if msg.Email != "" {
 		go emailReadReceipt(msg)
 	}
