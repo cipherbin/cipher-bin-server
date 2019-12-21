@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/bradford-hamilton/cipher-bin-server/app"
 	"github.com/bradford-hamilton/cipher-bin-server/db"
@@ -31,6 +32,20 @@ func main() {
 
 	// Create and hydrate our application struct with database
 	a := app.New(db)
+
+	// Spin off go routine that checks every 10 seconds for stale messages.
+	// If a message is 30 days or older, it will be destroyed. Not concerned
+	// here about kill signals, waiting for last any in flight routines to
+	// finish, etc
+	go func() {
+		uptimeTicker := time.NewTicker(10 * time.Second)
+		for {
+			select {
+			case <-uptimeTicker.C:
+				a.Db.DestroyStaleMessages()
+			}
+		}
+	}()
 
 	// Set the port
 	port := os.Getenv("CIPHER_BIN_SERVER_PORT")

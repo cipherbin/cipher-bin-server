@@ -123,3 +123,15 @@ func (db *Db) DestroyMessageByUUID(uuid string) error {
 
 	return nil
 }
+
+// DestroyStaleMessages finds all messages older than 30 days and destroys them
+func (db *Db) DestroyStaleMessages() error {
+	query := `DELETE FROM messages WHERE created_at <= NOW() - INTERVAL '30 days';`
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	return nil
+}

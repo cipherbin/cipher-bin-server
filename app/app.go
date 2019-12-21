@@ -23,7 +23,7 @@ import (
 
 // App is a struct that holds a chi multiplexer as well as a connection to our database
 type App struct {
-	db  *db.Db
+	Db  *db.Db
 	Mux *chi.Mux
 }
 
@@ -64,7 +64,7 @@ func New(db *db.Db) *App {
 
 	// Create a pointer to an App struct and attach the database
 	// as well as the *chi.Mux
-	a := &App{db: db, Mux: r}
+	a := &App{Db: db, Mux: r}
 
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Post("/msg", a.postMessage)
@@ -101,7 +101,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new message record with the provided uuid and message content
-	err = a.db.PostMessage(m)
+	err = a.Db.PostMessage(m)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -141,7 +141,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve a message by it's uuid
-	msg, err := a.db.GetMessageByUUID(uuid)
+	msg, err := a.Db.GetMessageByUUID(uuid)
 	if err != nil {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
@@ -159,7 +159,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 
 	// If we get here then a message has been found and will be returned, so
 	// we need to destroy it before we return it
-	err = a.db.DestroyMessageByUUID(uuid)
+	err = a.Db.DestroyMessageByUUID(uuid)
 	if err != nil {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
@@ -184,7 +184,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 // Health checks
 func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 	// Check that our db connection is good
-	err := a.db.Ping()
+	err := a.Db.Ping()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
