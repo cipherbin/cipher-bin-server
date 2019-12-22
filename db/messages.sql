@@ -10,3 +10,6 @@ ALTER TABLE messages
 
 ALTER TABLE messages
   ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
+
+ALTER TABLE messages
+  ADD COLUMN password varchar(255) DEFAULT '';
