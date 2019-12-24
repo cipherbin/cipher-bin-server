@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="cipher_bin_logo.png" alt="cipher bin logo" />
+  <img src="cipher_bin_logo_black.png" alt="cipher bin logo" />
   <h1 align="center">CipherBin</h1>
 </p>
 
