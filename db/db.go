@@ -64,7 +64,7 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 	// Prepare query, takes a uuid argument, protects from sql injection
 	stmt, err := db.Prepare("SELECT * FROM messages WHERE uuid=$1")
 	if err != nil {
-		log.Print("GetMessageByUUID Preperation Err: ", err)
+		log.Print("GetMessageByUUID Preparation Err: ", err)
 		return nil, err
 	}
 
