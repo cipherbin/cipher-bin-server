@@ -151,7 +151,9 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	// record was not found. 99.9% of the time this is due to the message
 	// having already been destroyed
 	if msg.ID == 0 {
-		e := &MessageResponse{Message: "Sorry, this message has already been viewed and destroyed"}
+		e := &MessageResponse{
+			Message: "Sorry, this message has either already been viewed and destroyed or it never existed at all",
+		}
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(e)
 		return
