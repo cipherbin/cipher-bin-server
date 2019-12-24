@@ -1,4 +1,8 @@
-# Cipher Bin
+<p align="center">
+  <img src="cipher_bin_logo.png" alt="cipher bin logo" />
+  <h1 align="center">CipherBin</h1>
+</p>
+
 Source code for the server, if you are looking for the client side React app [go here](https://github.com/bradford-hamilton/cipher-bin-client). If you are looking for the CLI app [go here](https://github.com/bradford-hamilton/cipher-bin-cli).
 
 ## Development
