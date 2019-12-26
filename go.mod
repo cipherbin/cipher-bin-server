@@ -9,7 +9,7 @@ require (
 	github.com/go-chi/cors v1.0.0
 	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.1.1
-	github.com/lib/pq v1.2.0
+	github.com/lib/pq v1.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/text v0.3.2 // indirect
