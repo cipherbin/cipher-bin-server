@@ -1,4 +1,4 @@
-module github.com/bradford-hamilton/cipher-bin-server
+module github.com/cipherbin/cipher-bin-server
 
 go 1.13
 

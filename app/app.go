@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/bradford-hamilton/cipher-bin-server/db"
+	"github.com/cipherbin/cipher-bin-server/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
