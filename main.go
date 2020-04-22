@@ -35,7 +35,7 @@ func main() {
 
 	// Spin off go routine that checks every 10 seconds for stale messages.
 	// If a message is 30 days or older, it will be destroyed. Not concerned
-	// here about kill signals, waiting for last any in flight routines to
+	// here about kill signals, waiting for any last in flight routines to
 	// finish, etc
 	go func() {
 		uptimeTicker := time.NewTicker(10 * time.Second)
