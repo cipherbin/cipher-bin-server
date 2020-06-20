@@ -25,7 +25,7 @@ Source code for the server, if you are looking for the client side React app [go
     createdb cipher_bin_dev
     ```
 
-1. `cp env.sample.sh env.sh`
+1. `cp env.example.sh env.sh`
 
 2. Update variables in env.sh
 
