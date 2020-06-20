@@ -19,6 +19,18 @@
 
 Source code for the server, if you are looking for the client side React app [go here](https://github.com/cipherbin/cipher-bin-client). If you are looking for the CLI app [go here](https://github.com/cipherbin/cipher-bin-cli).
 
+## Setup
+0. Create postgres db
+    ```
+    createdb cipher_bin_dev
+    ```
+
+1. `cp env.sample.sh env.sh`
+
+2. Update variables in env.sh
+
+3. `make migrate`
+
 ## Development
 Clone repo and run:
 ```
@@ -27,7 +39,7 @@ go mod download
 
 Build it:
 ```
-go build -o cipherbin main.go
+make build
 ```
 
 Run it:
@@ -37,5 +49,5 @@ Run it:
 
 Or for quicker iterations build and run in one step:
 ```
-go run main.go
+make run
 ```
