@@ -17,3 +17,7 @@
 errors.log
 
 build-n-deploy.sh
+
+cipherbin
+
+env.sh
