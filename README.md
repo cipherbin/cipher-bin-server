@@ -29,6 +29,7 @@ Source code for the server, if you are looking for the client side React app [go
 
 2. Update variables in env.sh
 
+3. `make migrate`
 
 ## Development
 Clone repo and run:
