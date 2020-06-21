@@ -68,11 +68,50 @@ func New(db *db.Db) *App {
 
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Post("/msg", a.postMessage)
+	r.Post("/slack-msg", a.postSlackMessage)
 	r.Get("/msg", a.getMessage)
 	r.Get("/ping", a.ping)
 
 	return a
 }
+
+// postMessage is a HandlerFunc for post requests to /msg
+func (a *App) postSlackMessage(w http.ResponseWriter, r *http.Request) {
+	// Return early for method not allowed
+	if r.Method != "POST" {
+		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the POST body
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer r.Body.Close()
+
+	// Initialize a return MessageBody
+	var m db.Message
+
+	// Unmarshal the body bytes into a pointer to our Message struct
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// Create a new message record with the provided uuid and message content
+	err = a.Db.PostMessage(m)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// 200 OK
+	w.WriteHeader(http.StatusOK)
+}
+
 
 // postMessage is a HandlerFunc for post requests to /msg
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
