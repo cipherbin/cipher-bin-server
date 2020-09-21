@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/cipherbin/cipher-bin-server/app"
-	"github.com/cipherbin/cipher-bin-server/db"
+	"github.com/cipherbin/cipher-bin-server/internal/app"
+	"github.com/cipherbin/cipher-bin-server/internal/db"
 )
 
 func main() {

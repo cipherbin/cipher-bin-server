@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cipherbin/cipher-bin-server/db"
+	"github.com/cipherbin/cipher-bin-server/internal/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -69,6 +69,8 @@ func New(db *db.Db) *App {
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Post("/msg", a.postMessage)
 	r.Get("/msg", a.getMessage)
+	r.Post("/slack-write", a.slackWrite)
+	// r.Post("/slack-read", a.slackRead)
 	r.Get("/ping", a.ping)
 
 	return a
@@ -94,15 +96,13 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	var m db.Message
 
 	// Unmarshal the body bytes into a pointer to our Message struct
-	err = json.Unmarshal(b, &m)
-	if err != nil {
+	if err := json.Unmarshal(b, &m); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	// Create a new message record with the provided uuid and message content
-	err = a.Db.PostMessage(m)
-	if err != nil {
+	if err := a.Db.PostMessage(m); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -161,8 +161,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 
 	// If we get here then a message has been found and will be returned, so
 	// we need to destroy it before we return it
-	err = a.Db.DestroyMessageByUUID(uuid)
-	if err != nil {
+	if err := a.Db.DestroyMessageByUUID(uuid); err != nil {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
 	}
@@ -183,11 +182,67 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(m)
 }
 
-// Health checks
+// SlackResponse represents the http response we receive when posting to slash commands
+type SlackResponse struct {
+	Token          string `json:"token,omitempty"`
+	TeamID         string `json:"team_id,omitempty"`
+	TeamDomain     string `json:"team_domain,omitempty"`
+	EnterpriseName string `json:"enterprise_name,omitempty"`
+	EnterpriseID   string `json:"enterprise_id,omitempty"`
+	ChannelID      string `json:"channel_id,omitempty"`
+	ChannelName    string `json:"channel_name,omitempty"`
+	UserID         string `json:"user_id,omitempty"`
+	UserName       string `json:"user_name,omitempty"`
+	Command        string `json:"command,omitempty"`
+	Text           string `json:"text,omitempty"`
+	APIAppID       string `json:"api_app_id,omitempty"`
+	ResponseURL    string `json:"response_url,omitempty"`
+	TriggerID      string `json:"trigger_id,omitempty"`
+}
+
+func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sr, err := slashCommandParse(r)
+	if err != nil {
+		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(sr.Text)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// slashCommandParse will parse the request of the slash command
+func slashCommandParse(r *http.Request) (SlackResponse, error) {
+	if err := r.ParseForm(); err != nil {
+		return SlackResponse{}, err
+	}
+	return SlackResponse{
+		Token:          r.PostForm.Get("token"),
+		TeamID:         r.PostForm.Get("team_id"),
+		TeamDomain:     r.PostForm.Get("team_domain"),
+		EnterpriseID:   r.PostForm.Get("enterprise_id"),
+		EnterpriseName: r.PostForm.Get("enterprise_name"),
+		ChannelID:      r.PostForm.Get("channel_id"),
+		ChannelName:    r.PostForm.Get("channel_name"),
+		UserID:         r.PostForm.Get("user_id"),
+		UserName:       r.PostForm.Get("user_name"),
+		Command:        r.PostForm.Get("command"),
+		Text:           r.PostForm.Get("text"),
+		APIAppID:       r.PostForm.Get("app_api_id"),
+		ResponseURL:    r.PostForm.Get("response_url"),
+		TriggerID:      r.PostForm.Get("trigger_id"),
+	}, nil
+}
+
+// Health check handler
 func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 	// Check that our db connection is good
-	err := a.Db.Ping()
-	if err != nil {
+	if err := a.Db.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
