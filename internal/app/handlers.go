@@ -142,7 +142,7 @@ func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sr, err := slashCommandParse(r)
+	sr, err := parseSlackResponse(r)
 	if err != nil {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
@@ -152,8 +152,7 @@ func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// slashCommandParse will parse the request of the slash command
-func slashCommandParse(r *http.Request) (SlackResponse, error) {
+func parseSlackResponse(r *http.Request) (SlackResponse, error) {
 	if err := r.ParseForm(); err != nil {
 		return SlackResponse{}, err
 	}
