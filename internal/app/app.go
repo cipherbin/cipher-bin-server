@@ -65,7 +65,6 @@ func New(db *db.Db) *App {
 	r.Post("/msg", a.postMessage)
 	r.Get("/msg", a.getMessage)
 	r.Post("/slack-write", a.slackWrite)
-	// r.Post("/slack-read", a.slackRead)
 	r.Get("/ping", a.ping)
 
 	return a
