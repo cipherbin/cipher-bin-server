@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/cipherbin/cipher-bin-server/internal/db"
@@ -17,8 +18,9 @@ import (
 
 // App is a struct that holds a chi multiplexer as well as a connection to our database
 type App struct {
-	Db  *db.Db
-	Mux *chi.Mux
+	Db      *db.Db
+	Mux     *chi.Mux
+	baseURL string
 }
 
 // New takes a *db.Db and creates a chi router, sets up cors rules, sets up
@@ -27,7 +29,6 @@ func New(db *db.Db) *App {
 	limiter := tollbooth.NewLimiter(3, &limiter.ExpirableOptions{
 		DefaultExpirationTTL: time.Minute * 30,
 	})
-
 	limiter.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(429), http.StatusTooManyRequests)
 		return
@@ -58,7 +59,7 @@ func New(db *db.Db) *App {
 
 	// Create a pointer to an App struct and attach the database
 	// as well as the *chi.Mux
-	a := &App{Db: db, Mux: r}
+	a := &App{Db: db, Mux: r, baseURL: baseURL()}
 
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Post("/msg", a.postMessage)
@@ -68,4 +69,12 @@ func New(db *db.Db) *App {
 	r.Get("/ping", a.ping)
 
 	return a
+}
+
+func baseURL() string {
+	baseURL := "https://cipherb.in"
+	if os.Getenv("CIPHER_BIN_ENV") == "development" {
+		baseURL = "http://localhost:3000"
+	}
+	return baseURL
 }

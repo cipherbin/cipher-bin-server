@@ -8,6 +8,8 @@ import (
 	"net/smtp"
 	"os"
 
+	"github.com/cipherbin/cipher-bin-cli/pkg/aes256"
+	"github.com/cipherbin/cipher-bin-cli/pkg/randstring"
 	"github.com/cipherbin/cipher-bin-server/internal/db"
 	gu "github.com/google/uuid"
 )
@@ -147,8 +149,24 @@ func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(sr.Text)
 
+	uuidv4 := gu.New().String()
+	key := randstring.New(32)
+
+	// Encrypt the message using the shared cipherbin CLI package aes256
+	encryptedMsg, err := aes256.Encrypt([]byte(sr.Text), key)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	msg := db.Message{UUID: uuidv4, Message: encryptedMsg}
+	if err := a.Db.PostMessage(msg); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Write([]byte(fmt.Sprintf("%s/msg?bin=%s;%s", a.baseURL, uuidv4, key)))
 	w.WriteHeader(http.StatusOK)
 }
 
