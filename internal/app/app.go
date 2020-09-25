@@ -11,8 +11,8 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 
-	"github.com/didip/tollbooth"
-	"github.com/didip/tollbooth/limiter"
+	"github.com/didip/tollbooth/v6"
+	limiter "github.com/didip/tollbooth/v6/limiter"
 	"github.com/didip/tollbooth_chi"
 )
 
@@ -50,7 +50,6 @@ func New(db *db.Db) *App {
 		cors.Handler, // Allow * origins
 		render.SetContentType(render.ContentTypeJSON), // set content-type headers as application/json
 		middleware.Logger,                   // log api request calls
-		middleware.DefaultCompress,          // compress results, mostly gzipping assets and json
 		middleware.StripSlashes,             // strip slashes to no slash URL versions
 		middleware.Recoverer,                // recover from panics without crashing server
 		middleware.Timeout(30*time.Second),  // Set a reasonable timeout
