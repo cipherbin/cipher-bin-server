@@ -16,13 +16,11 @@ import (
 
 // postMessage is a HandlerFunc for post requests to /msg
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
-	// Return early for method not allowed
 	if r.Method != "POST" {
 		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Read the POST body
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -30,10 +28,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	// Initialize a return MessageBody
 	var m db.Message
-
-	// Unmarshal the body bytes into a pointer to our Message struct
 	if err := json.Unmarshal(b, &m); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -45,7 +40,6 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 200 OK
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -65,7 +59,6 @@ func isValidUUID(uuid string) bool {
 // getMessage is a HandlerFunc for GET requests to /msg
 // Ex: cipherb.in/msg?bin=abc123
 func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
-	// Return early for method not allowed
 	if r.Method != "GET" {
 		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
 		return
@@ -78,7 +71,6 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve a message by it's uuid
 	msg, err := a.Db.GetMessageByUUID(uuid)
 	if err != nil {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
