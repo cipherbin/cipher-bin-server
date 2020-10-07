@@ -106,8 +106,6 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	// Create a response that only returns the ecrypted message contents, as
 	// the front end doesn't need to know about any of the other attributes
 	m := MessageResponse{msg.Message}
-
-	// 200 OK -> return msg
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(m)
 }
