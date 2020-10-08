@@ -143,7 +143,7 @@ func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
 	uuidv4 := gu.New().String()
 	key := randstring.New(32)
 
-	// Encrypt the message using the shared cipherbin CLI package aes256
+	// Encrypt the message using the shared cipherbin CLI aes256 package
 	encryptedMsg, err := aes256.Encrypt([]byte(sr.Text), key)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
