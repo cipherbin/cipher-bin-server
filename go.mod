@@ -1,6 +1,6 @@
 module github.com/cipherbin/cipher-bin-server
 
-go 1.13
+go 1.21.6
 
 require (
 	github.com/cipherbin/cipher-bin-cli v0.5.2
@@ -11,9 +11,14 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.1.1
 	github.com/lib/pq v1.8.0
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+)
+
+require (
+	github.com/go-pkgz/expirable-cache v0.0.3 // indirect
+	github.com/mergermarket/go-pkcs7 v0.0.0-20170926155232-153b18ea13c9 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7 // indirect
 	golang.org/x/text v0.3.3 // indirect
-	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
