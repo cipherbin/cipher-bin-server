@@ -35,14 +35,12 @@ func New(db *db.Db) *App {
 		tollbooth_chi.LimitHandler(limiterMiddleware()), // Set a request limiter by ip
 	)
 
-	// Create a pointer to an App struct and attach the database
-	// as well as the *chi.Mux
 	a := &App{Db: db, Mux: r, baseURL: baseURL()}
 
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Post("/msg", a.postMessage)
 	r.Get("/msg", a.getMessage)
-	r.Post("/slack-write", a.slackWrite)
+	// r.Post("/slack-write", a.slackWrite)
 	r.Get("/ping", a.ping)
 
 	return a

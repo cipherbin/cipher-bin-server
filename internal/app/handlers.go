@@ -3,13 +3,11 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/smtp"
 	"os"
 
-	"github.com/cipherbin/cipher-bin-cli/pkg/aes256"
-	"github.com/cipherbin/cipher-bin-cli/pkg/randstring"
 	"github.com/cipherbin/cipher-bin-server/internal/db"
 	gu "github.com/google/uuid"
 )
@@ -21,7 +19,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -110,77 +108,77 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(m)
 }
 
-// SlackResponse represents the http response we receive when posting to slash commands
-type SlackResponse struct {
-	Token          string `json:"token,omitempty"`
-	TeamID         string `json:"team_id,omitempty"`
-	TeamDomain     string `json:"team_domain,omitempty"`
-	EnterpriseName string `json:"enterprise_name,omitempty"`
-	EnterpriseID   string `json:"enterprise_id,omitempty"`
-	ChannelID      string `json:"channel_id,omitempty"`
-	ChannelName    string `json:"channel_name,omitempty"`
-	UserID         string `json:"user_id,omitempty"`
-	UserName       string `json:"user_name,omitempty"`
-	Command        string `json:"command,omitempty"`
-	Text           string `json:"text,omitempty"`
-	APIAppID       string `json:"api_app_id,omitempty"`
-	ResponseURL    string `json:"response_url,omitempty"`
-	TriggerID      string `json:"trigger_id,omitempty"`
-}
+// // SlackResponse represents the http response we receive when posting to slash commands
+// type SlackResponse struct {
+// 	Token          string `json:"token,omitempty"`
+// 	TeamID         string `json:"team_id,omitempty"`
+// 	TeamDomain     string `json:"team_domain,omitempty"`
+// 	EnterpriseName string `json:"enterprise_name,omitempty"`
+// 	EnterpriseID   string `json:"enterprise_id,omitempty"`
+// 	ChannelID      string `json:"channel_id,omitempty"`
+// 	ChannelName    string `json:"channel_name,omitempty"`
+// 	UserID         string `json:"user_id,omitempty"`
+// 	UserName       string `json:"user_name,omitempty"`
+// 	Command        string `json:"command,omitempty"`
+// 	Text           string `json:"text,omitempty"`
+// 	APIAppID       string `json:"api_app_id,omitempty"`
+// 	ResponseURL    string `json:"response_url,omitempty"`
+// 	TriggerID      string `json:"trigger_id,omitempty"`
+// }
 
-func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != "POST" {
+// 		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	sr, err := parseSlackResponse(r)
-	if err != nil {
-		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
-		return
-	}
+// 	sr, err := parseSlackResponse(r)
+// 	if err != nil {
+// 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
+// 		return
+// 	}
 
-	uuidv4 := gu.New().String()
-	key := randstring.New(32)
+// 	uuidv4 := gu.New().String()
+// 	key := randstring.New(32)
 
-	// Encrypt the message using the shared cipherbin CLI aes256 package
-	encryptedMsg, err := aes256.Encrypt([]byte(sr.Text), key)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
+// 	// Encrypt the message using the shared cipherbin CLI aes256 package
+// 	encryptedMsg, err := aes256.Encrypt([]byte(sr.Text), key)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), 500)
+// 		return
+// 	}
 
-	msg := db.Message{UUID: uuidv4, Message: encryptedMsg}
-	if err := a.Db.PostMessage(msg); err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
+// 	msg := db.Message{UUID: uuidv4, Message: encryptedMsg}
+// 	if err := a.Db.PostMessage(msg); err != nil {
+// 		http.Error(w, err.Error(), 500)
+// 		return
+// 	}
 
-	w.Write([]byte(fmt.Sprintf("%s/msg?bin=%s;%s", a.baseURL, uuidv4, key)))
-	w.WriteHeader(http.StatusOK)
-}
+// 	w.Write([]byte(fmt.Sprintf("%s/msg?bin=%s;%s", a.baseURL, uuidv4, key)))
+// 	w.WriteHeader(http.StatusOK)
+// }
 
-func parseSlackResponse(r *http.Request) (SlackResponse, error) {
-	if err := r.ParseForm(); err != nil {
-		return SlackResponse{}, err
-	}
-	return SlackResponse{
-		Token:          r.PostForm.Get("token"),
-		TeamID:         r.PostForm.Get("team_id"),
-		TeamDomain:     r.PostForm.Get("team_domain"),
-		EnterpriseID:   r.PostForm.Get("enterprise_id"),
-		EnterpriseName: r.PostForm.Get("enterprise_name"),
-		ChannelID:      r.PostForm.Get("channel_id"),
-		ChannelName:    r.PostForm.Get("channel_name"),
-		UserID:         r.PostForm.Get("user_id"),
-		UserName:       r.PostForm.Get("user_name"),
-		Command:        r.PostForm.Get("command"),
-		Text:           r.PostForm.Get("text"),
-		APIAppID:       r.PostForm.Get("app_api_id"),
-		ResponseURL:    r.PostForm.Get("response_url"),
-		TriggerID:      r.PostForm.Get("trigger_id"),
-	}, nil
-}
+// func parseSlackResponse(r *http.Request) (SlackResponse, error) {
+// 	if err := r.ParseForm(); err != nil {
+// 		return SlackResponse{}, err
+// 	}
+// 	return SlackResponse{
+// 		Token:          r.PostForm.Get("token"),
+// 		TeamID:         r.PostForm.Get("team_id"),
+// 		TeamDomain:     r.PostForm.Get("team_domain"),
+// 		EnterpriseID:   r.PostForm.Get("enterprise_id"),
+// 		EnterpriseName: r.PostForm.Get("enterprise_name"),
+// 		ChannelID:      r.PostForm.Get("channel_id"),
+// 		ChannelName:    r.PostForm.Get("channel_name"),
+// 		UserID:         r.PostForm.Get("user_id"),
+// 		UserName:       r.PostForm.Get("user_name"),
+// 		Command:        r.PostForm.Get("command"),
+// 		Text:           r.PostForm.Get("text"),
+// 		APIAppID:       r.PostForm.Get("app_api_id"),
+// 		ResponseURL:    r.PostForm.Get("response_url"),
+// 		TriggerID:      r.PostForm.Get("trigger_id"),
+// 	}, nil
+// }
 
 // Health check handler
 func (a *App) ping(w http.ResponseWriter, r *http.Request) {
