@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -198,8 +199,6 @@ func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 func emailReadReceipt(message *db.Message) {
 	user := os.Getenv("CIPHER_BIN_EMAIL_USERNAME")
 	pass := os.Getenv("CIPHER_BIN_EMAIL_PASSWORD")
-
-	// Set up authentication
 	auth := smtp.PlainAuth("", user, pass, "smtp.gmail.com")
 	emailBody := "Your message has been viewed and destroyed."
 
@@ -220,12 +219,8 @@ func emailReadReceipt(message *db.Message) {
 		),
 	)
 
-	// Connect to the server, authenticate, and send the email
-	smtp.SendMail(
-		"smtp.gmail.com:587",
-		auth,
-		user,
-		[]string{message.Email},
-		emailBytes,
-	)
+	err := smtp.SendMail("smtp.gmail.com:587", auth, user, []string{message.Email}, emailBytes)
+	if err != nil {
+		log.Printf("error sending email: %+v\n", err)
+	}
 }
