@@ -13,29 +13,24 @@ import (
 	gu "github.com/google/uuid"
 )
 
-// postMessage is a HandlerFunc for post requests to /msg
+// postMessage is the HandlerFunc for post requests to /msg (create new message).
 func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
 
 	var m db.Message
 	if err := json.Unmarshal(b, &m); err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Create a new message record with the provided uuid and message content
+	// Create a new message record with the provided uuid and message content.
 	if err := a.Db.PostMessage(m); err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -55,14 +50,9 @@ func isValidUUID(uuid string) bool {
 	return err == nil
 }
 
-// getMessage is a HandlerFunc for GET requests to /msg
+// getMessage is a HandlerFunc for GET requests to /msg (read message).
 // Ex: cipherb.in/msg?bin=abc123
 func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	// Get a message uuid from the "bin" query param
 	uuid := r.URL.Query().Get("bin")
 	if uuid == "" || !isValidUUID(uuid) {
@@ -109,78 +99,6 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(m)
 }
 
-// // SlackResponse represents the http response we receive when posting to slash commands
-// type SlackResponse struct {
-// 	Token          string `json:"token,omitempty"`
-// 	TeamID         string `json:"team_id,omitempty"`
-// 	TeamDomain     string `json:"team_domain,omitempty"`
-// 	EnterpriseName string `json:"enterprise_name,omitempty"`
-// 	EnterpriseID   string `json:"enterprise_id,omitempty"`
-// 	ChannelID      string `json:"channel_id,omitempty"`
-// 	ChannelName    string `json:"channel_name,omitempty"`
-// 	UserID         string `json:"user_id,omitempty"`
-// 	UserName       string `json:"user_name,omitempty"`
-// 	Command        string `json:"command,omitempty"`
-// 	Text           string `json:"text,omitempty"`
-// 	APIAppID       string `json:"api_app_id,omitempty"`
-// 	ResponseURL    string `json:"response_url,omitempty"`
-// 	TriggerID      string `json:"trigger_id,omitempty"`
-// }
-
-// func (a *App) slackWrite(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != "POST" {
-// 		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
-// 		return
-// 	}
-
-// 	sr, err := parseSlackResponse(r)
-// 	if err != nil {
-// 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	uuidv4 := gu.New().String()
-// 	key := randstring.New(32)
-
-// 	// Encrypt the message using the shared cipherbin CLI aes256 package
-// 	encryptedMsg, err := aes256.Encrypt([]byte(sr.Text), key)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), 500)
-// 		return
-// 	}
-
-// 	msg := db.Message{UUID: uuidv4, Message: encryptedMsg}
-// 	if err := a.Db.PostMessage(msg); err != nil {
-// 		http.Error(w, err.Error(), 500)
-// 		return
-// 	}
-
-// 	w.Write([]byte(fmt.Sprintf("%s/msg?bin=%s;%s", a.baseURL, uuidv4, key)))
-// 	w.WriteHeader(http.StatusOK)
-// }
-
-// func parseSlackResponse(r *http.Request) (SlackResponse, error) {
-// 	if err := r.ParseForm(); err != nil {
-// 		return SlackResponse{}, err
-// 	}
-// 	return SlackResponse{
-// 		Token:          r.PostForm.Get("token"),
-// 		TeamID:         r.PostForm.Get("team_id"),
-// 		TeamDomain:     r.PostForm.Get("team_domain"),
-// 		EnterpriseID:   r.PostForm.Get("enterprise_id"),
-// 		EnterpriseName: r.PostForm.Get("enterprise_name"),
-// 		ChannelID:      r.PostForm.Get("channel_id"),
-// 		ChannelName:    r.PostForm.Get("channel_name"),
-// 		UserID:         r.PostForm.Get("user_id"),
-// 		UserName:       r.PostForm.Get("user_name"),
-// 		Command:        r.PostForm.Get("command"),
-// 		Text:           r.PostForm.Get("text"),
-// 		APIAppID:       r.PostForm.Get("app_api_id"),
-// 		ResponseURL:    r.PostForm.Get("response_url"),
-// 		TriggerID:      r.PostForm.Get("trigger_id"),
-// 	}, nil
-// }
-
 // Health check handler
 func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 	// Check that our db connection is good
@@ -210,14 +128,8 @@ func emailReadReceipt(message *db.Message) {
 	}
 
 	// A super basic email template
-	emailBytes := []byte(
-		fmt.Sprintf(
-			"To: %s\r\nFrom: %s\r\nSubject: Your message has been read.\r\n\r\n\r\n%s\r\n",
-			message.Email,
-			user,
-			emailBody,
-		),
-	)
+	content := "To: %s\r\nFrom: %s\r\nSubject: Your message has been read.\r\n\r\n\r\n%s\r\n"
+	emailBytes := []byte(fmt.Sprintf(content, message.Email, user, emailBody))
 
 	err := smtp.SendMail("smtp.gmail.com:587", auth, user, []string{message.Email}, emailBytes)
 	if err != nil {

@@ -10,13 +10,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Db is our database struct used for interacting with the database
+// Db is our database struct used for interacting with the database.
 type Db struct {
 	*sql.DB
 }
 
-// New makes a new database using the connection string and
-// returns it, otherwise returns the error
+// New creates a new database and checks its connection before returning it.
 func New() (*Db, error) {
 	// Don't feel like setting a password on my local db
 	p := os.Getenv("CIPHER_BIN_DB_PASSWORD")
@@ -40,15 +39,14 @@ func New() (*Db, error) {
 	}
 
 	// Check that our connection is good
-	err = db.Ping()
-	if err != nil {
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 
 	return &Db{db}, nil
 }
 
-// Message represents a record from our "messages" column
+// Message represents a record from our "messages" column in the database.
 type Message struct {
 	ID            int    `json:"id"`
 	UUID          string `json:"uuid"`
@@ -59,7 +57,7 @@ type Message struct {
 	CreatedAt     string `json:"created_at"`
 }
 
-// GetMessageByUUID finds a message by it's UUID or returns an error
+// GetMessageByUUID finds a message by it's UUID or returns an error.
 func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 	// Prepare query, takes a uuid argument, protects from sql injection
 	stmt, err := db.Prepare("SELECT * FROM messages WHERE uuid=$1")
@@ -75,10 +73,8 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 		return nil, err
 	}
 
-	// Create Message struct for holding each row's data
+	// Copy the columns from the row into the values pointed at by m (Message).
 	var m Message
-
-	// Copy the columns from the row into the values pointed at by m (Message)
 	for rows.Next() {
 		err = rows.Scan(
 			&m.ID,
@@ -98,11 +94,10 @@ func (db *Db) GetMessageByUUID(uuid string) (*Message, error) {
 	return &m, nil
 }
 
-// PostMessage takes a uuid and a message & inserts a new record into the db
+// PostMessage takes a uuid and a message & inserts a new record into the db.
 func (db *Db) PostMessage(msg Message) error {
 	query := `INSERT INTO messages (uuid, message, email, reference_name, password) VALUES ($1, $2, $3, $4, $5);`
 
-	// Execute query with uuid and message arguments
 	_, err := db.Exec(
 		query,
 		msg.UUID,
@@ -119,11 +114,10 @@ func (db *Db) PostMessage(msg Message) error {
 	return nil
 }
 
-// DestroyMessageByUUID rakes a uuid and attempts to destroy the associated record
+// DestroyMessageByUUID rakes a uuid and attempts to destroy the associated record.
 func (db *Db) DestroyMessageByUUID(uuid string) error {
 	query := `DELETE FROM messages WHERE uuid=$1;`
 
-	// Execute query with uuid argument
 	_, err := db.Exec(query, uuid)
 	if err != nil {
 		log.Print(err)
@@ -136,6 +130,7 @@ func (db *Db) DestroyMessageByUUID(uuid string) error {
 // DestroyStaleMessages finds all messages older than 30 days and destroys them
 func (db *Db) DestroyStaleMessages() error {
 	query := `DELETE FROM messages WHERE created_at <= NOW() - INTERVAL '30 days';`
+
 	_, err := db.Exec(query)
 	if err != nil {
 		log.Print(err)

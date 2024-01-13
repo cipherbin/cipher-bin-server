@@ -12,15 +12,14 @@ import (
 	"github.com/didip/tollbooth_chi"
 )
 
-// App is a struct that holds a chi multiplexer as well as a connection to our database
+// App is the structure that holds all the resources and context for the API.
 type App struct {
 	Db      *db.Db
 	Mux     *chi.Mux
 	baseURL string
 }
 
-// New takes a *db.Db and creates a chi router, sets up cors rules, sets up
-// a handful of middleware, then hydrates an App struct to return a pointer to it
+// New creates and hydrates an *App structure for use.
 func New(db *db.Db) *App {
 	r := chi.NewRouter()
 
@@ -40,7 +39,6 @@ func New(db *db.Db) *App {
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
 	r.Post("/msg", a.postMessage)
 	r.Get("/msg", a.getMessage)
-	// r.Post("/slack-write", a.slackWrite)
 	r.Get("/ping", a.ping)
 
 	return a
