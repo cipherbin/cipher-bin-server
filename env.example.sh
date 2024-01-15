@@ -11,4 +11,3 @@ export CIPHER_BIN_SSL_MODE=disable
 export CIPHER_BIN_EMAIL_USERNAME="domain@email.com"
 export CIPHER_BIN_EMAIL_PASSWORD=verysecurepassword
 export CIPHER_BIN_ENV=development
-export CIPHER_BIN_PG_DB_TABLE=messages

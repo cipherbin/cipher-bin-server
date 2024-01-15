@@ -14,7 +14,7 @@ import (
 )
 
 // postMessage is the HandlerFunc for post requests to /msg (create new message).
-func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) postMessage(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -29,7 +29,7 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new message record with the provided uuid and message content.
-	if err := a.Db.PostMessage(m); err != nil {
+	if err := s.Db.PostMessage(m); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -37,14 +37,14 @@ func (a *App) postMessage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// MessageResponse is the shape of the json we return when a user fetches a message
+// MessageResponse is the shape of the json we return when a user fetches a message.
 type MessageResponse struct {
 	Message string `json:"message"`
 }
 
 // isValidUUID takes a string and verifies it is a valid uuid. Was initially
 // going to use a regex instead of 3rd party package, however google's uuid Parse
-// method benchmarked 18x faster
+// method benchmarked 18x faster.
 func isValidUUID(uuid string) bool {
 	_, err := gu.Parse(uuid)
 	return err == nil
@@ -52,7 +52,7 @@ func isValidUUID(uuid string) bool {
 
 // getMessage is a HandlerFunc for GET requests to /msg (read message).
 // Ex: cipherb.in/msg?bin=abc123
-func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getMessage(w http.ResponseWriter, r *http.Request) {
 	// Get a message uuid from the "bin" query param
 	uuid := r.URL.Query().Get("bin")
 	if uuid == "" || !isValidUUID(uuid) {
@@ -60,7 +60,7 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg, err := a.Db.GetMessageByUUID(uuid)
+	msg, err := s.Db.GetMessageByUUID(uuid)
 	if err != nil {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
@@ -80,29 +80,27 @@ func (a *App) getMessage(w http.ResponseWriter, r *http.Request) {
 
 	// If we get here then a message has been found and will be returned, so
 	// we need to destroy it before we return it
-	if err := a.Db.DestroyMessageByUUID(uuid); err != nil {
+	if err := s.Db.DestroyMessageByUUID(uuid); err != nil {
 		http.Error(w, "We're sorry, there was an error!", http.StatusInternalServerError)
 		return
 	}
 
-	// If the msg has a designated read confirmation email, send it off. Right now I'm
-	// not worried about email error handling or making sure to wait for all of the
-	// running go routines to finish before process ends, etc.
+	// If the msg has a designated read confirmation email, send it
 	if msg.Email != "" {
 		go emailReadReceipt(msg)
 	}
 
 	// Create a response that only returns the ecrypted message contents, as
 	// the front end doesn't need to know about any of the other attributes
-	m := MessageResponse{msg.Message}
+	m := MessageResponse{Message: msg.Message}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(m)
 }
 
 // Health check handler
-func (a *App) ping(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	// Check that our db connection is good
-	if err := a.Db.Ping(); err != nil {
+	if err := s.Db.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -114,24 +112,27 @@ func (a *App) ping(w http.ResponseWriter, r *http.Request) {
 
 // emailReadReceipt sends an email to a message's specified email letting
 // them know their message has been read and destroyed
-func emailReadReceipt(message *db.Message) {
+func emailReadReceipt(msg *db.Message) {
 	user := os.Getenv("CIPHER_BIN_EMAIL_USERNAME")
 	pass := os.Getenv("CIPHER_BIN_EMAIL_PASSWORD")
 	auth := smtp.PlainAuth("", user, pass, "smtp.gmail.com")
 	emailBody := "Your message has been viewed and destroyed."
 
-	if message.ReferenceName != "" {
+	if msg.ReferenceName != "" {
 		emailBody = fmt.Sprintf(
 			"Your message with reference name: \"%s\" has been viewed and destroyed.",
-			message.ReferenceName,
+			msg.ReferenceName,
 		)
 	}
 
-	// A super basic email template
-	content := "To: %s\r\nFrom: %s\r\nSubject: Your message has been read.\r\n\r\n\r\n%s\r\n"
-	emailBytes := []byte(fmt.Sprintf(content, message.Email, user, emailBody))
+	content := fmt.Sprintf(
+		"To: %s\r\nFrom: %s\r\nSubject: Your message has been read.\r\n\r\n\r\n%s\r\n",
+		msg.Email,
+		user,
+		emailBody,
+	)
 
-	err := smtp.SendMail("smtp.gmail.com:587", auth, user, []string{message.Email}, emailBytes)
+	err := smtp.SendMail("smtp.gmail.com:587", auth, user, []string{msg.Email}, []byte(content))
 	if err != nil {
 		log.Printf("error sending email: %+v\n", err)
 	}

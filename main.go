@@ -28,27 +28,24 @@ func main() {
 	}
 	defer db.Close()
 
-	a := app.New(db)
+	srv := app.NewServer(db)
 
-	// Spin off go routine that checks every minute for stale messages.
-	// If a message is 30 days or older, it will be destroyed. Not concerned
-	// here about kill signals, waiting for any last in flight routines to
-	// finish, etc
+	// Spin off go routine that checks every 5 minutes for stale messages.
+	// If a message is 30 days or older, it will be destroyed.
 	go func() {
-		uptimeTicker := time.NewTicker(60 * time.Second)
-		for {
-			select {
-			case <-uptimeTicker.C:
-				a.Db.DestroyStaleMessages()
-			}
+		uptimeTicker := time.NewTicker(5 * time.Minute)
+		defer uptimeTicker.Stop()
+
+		for range uptimeTicker.C {
+			srv.Db.DestroyStaleMessages()
 		}
 	}()
 
-	port := os.Getenv("CIPHER_BIN_SERVER_PORT")
+	port := os.Getenv("CIPHER_BIN_PORT")
 	if port == "" {
 		port = "4000"
 	}
 
 	fmt.Printf("Serving application on port %s\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), a.Mux))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), srv.Mux))
 }

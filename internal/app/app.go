@@ -12,15 +12,15 @@ import (
 	"github.com/didip/tollbooth_chi"
 )
 
-// App is the structure that holds all the resources and context for the API.
-type App struct {
+// Server is the structure that holds all the resources and context for the API.
+type Server struct {
 	Db      *db.Db
 	Mux     *chi.Mux
 	baseURL string
 }
 
-// New creates and hydrates an *App structure for use.
-func New(db *db.Db) *App {
+// NewServer creates and hydrates an *App structure for use.
+func NewServer(db *db.Db) *Server {
 	r := chi.NewRouter()
 
 	// Set up middleware stack
@@ -34,14 +34,14 @@ func New(db *db.Db) *App {
 		tollbooth_chi.LimitHandler(limiterMiddleware()), // Set a request limiter by ip
 	)
 
-	a := &App{Db: db, Mux: r, baseURL: baseURL()}
+	s := &Server{Db: db, Mux: r, baseURL: baseURL()}
 
 	// Define routes, the http methods that can be used on them, and their corresponding handlers
-	r.Post("/msg", a.postMessage)
-	r.Get("/msg", a.getMessage)
-	r.Get("/ping", a.ping)
+	r.Post("/msg", s.postMessage)
+	r.Get("/msg", s.getMessage)
+	r.Get("/ping", s.ping)
 
-	return a
+	return s
 }
 
 func baseURL() string {
